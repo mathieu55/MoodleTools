@@ -2,7 +2,7 @@
 ## SnippetDevTools
 Add a customizable tool bar and features in essay question to help students write code. 
 
-![Preview](https://github.com/mathieu55/MoodleTools/blob/master/doc/img/DevToolsPreview.png?raw=true)
+![Preview](https://github.com/mathieu55/MoodleTools/blob/main/doc/img/DevToolsPreview.png?raw=true)
 
 Features:
 - Enabling tab and shift-tab to indent code 
