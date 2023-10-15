@@ -1,0 +1,176 @@
+
+<div id="codeHelperToolbar">toolbar</div>
+<script>
+/*
+Author: Mathieu Dupuis
+Created: 2023
+*/
+
+window.addEventListener('load', (event) => {
+  let codeInput = document.getElementsByClassName("qtype_essay_response")[0];
+  let divToolbar = document.getElementById("codeHelperToolbar");
+  addTools(codeInput,divToolbar,true,true,"{}()<>\"\'&|");
+});
+
+
+function addTools(codeInput, toolbar, enableTab, addIndentAll, lstChar){
+  if(enableTab){
+    codeInput.addEventListener('keydown', indentWithTabKeyDown);
+  } 
+  createInterface(toolbar, enableTab, addIndentAll, lstChar);
+}
+
+function createInterface(toolbar,enableTab,addIndentAll,lstChar){
+  let instructionTab=enableTab?"Utiliser tab et shift-tab pour indenter":"&nbsp;";
+  let instructionChar=lstChar.length>0?"Copier dans le presse-papier":"&nbsp;";
+  let htmlBtnReindent=addIndentAll?`<button type="button" id="btnReindent" class="btn btn-secondary">Réindenter</button>`:"&nbsp;";
+  let ui=`<div class="row">
+  <div class="col">${instructionChar}</div>
+  <div class="col" align="right">${instructionTab}</div>
+  </div>
+  <div class="row justify-content-between">
+  <div class="col-6">
+  <div class="btn-toolbar" role="toolbar" aria-label="Toolbar">
+    <div class="btn-group mr-2" id="specialChar" role="group" aria-label="caractère spéciaux"></div>
+  </div>
+  </div>
+  <div class="col-3" align="right">${htmlBtnReindent}</div>
+  </row>`;
+  toolbar.innerHTML=ui;
+  let charTool=document.getElementById("specialChar");
+  for(let i=0;i<lstChar.length;i++){
+    addCharButton(charTool,lstChar[i]);
+  }
+
+  if(addIndentAll){
+    let btnReindent=document.getElementById("btnReindent");
+    btnReindent.addEventListener("click",reindentCode);
+  }
+}
+
+function addCharButton(boutonGroup, value){
+  let btn = document.createElement("button");
+  btn.type="button"
+  btn.className="btn btn-secondary";
+  btn.innerText=value;
+  btn.addEventListener("click",copyToClipboard(value));
+  boutonGroup.append(btn);
+}
+
+function copyToClipboard(value){
+  return function(){
+    navigator.clipboard.writeText(value);
+  }
+}
+
+function indentWithTabKeyDown(e) {
+  if (e.key == 'Tab') {
+    e.preventDefault();
+    let tabValue="   ";
+    let result={};
+
+    let start = this.selectionStart;
+    let end = this.selectionEnd;
+    if(!e.shiftKey){
+      result=tabAll(this.value,start,end,tabValue);
+    }
+    else{
+      result=untabAll(this.value,start,end,tabValue); 
+    }
+    this.value=result.value;
+    this.setSelectionRange(result.start, result.end);
+  }
+}
+
+function tabAll(text,start,end,tabValue){
+  let returnValue={
+    value:"",
+    start:start+tabValue.length,
+    end:end
+  };
+  let tabStr=text.split("\n");
+  let lnStart=getLn(tabStr,start);
+  let lnEnd=getLn(tabStr,end);
+  for(let i=lnStart;i<=lnEnd && i<tabStr.length;i++){
+    tabStr[i]=tabValue+tabStr[i];
+    returnValue.end+=tabValue.length;
+  }
+  returnValue.value=tabStr.join("\n");
+
+  return returnValue;
+}
+function untabAll(text,start,end,tabValue){
+  let returnValue={
+    value:"",
+    start:0,
+    end:end
+  };
+  let tabStr=text.split("\n");
+  let lnStart=getLn(tabStr,start);
+  let lnEnd=getLn(tabStr,end);
+  for(let i=lnStart;i<=lnEnd && i<tabStr.length;i++){
+    if(tabStr[i].startsWith(tabValue)){
+      tabStr[i]=tabStr[i].substring(tabValue.length);
+      returnValue.end-=tabValue.length;
+    }
+  }
+  if(returnValue.start>returnValue.end)
+    returnValue.end=returnValue.start;
+  returnValue.value=tabStr.join("\n");
+  returnValue.start=nthIndexof(returnValue.value,"\n",lnStart)+1;
+  if(returnValue.start<0)
+    returnValue.start=0;  
+  return returnValue;
+}
+function nthIndexof(str, search, n){
+  let i= -1;
+  while(n-- && i++<str.length){
+      i= str.indexOf(search, i);
+      if (i < 0) break;
+  }
+  return i;
+}
+function getLn(tabStr,index,offset=0){
+  let currentLength=-1; //for the first position
+  let currentLn=0;
+  
+  do{
+    currentLength+=tabStr[currentLn].length+1; //add 1 for /n
+    currentLn++;
+  }while(currentLength<index+offset && currentLn<tabStr.length);
+  return currentLn>tabStr.length?tabStr.length-1:currentLn-1;
+}
+function reindentAll(code,indentSize=3,charIndent="{([",charUnindent="})]"){
+  let nbIndent=0;
+  let tabCode=code.split("\n");
+  
+  let mapIdent={};
+  for(let i=0;i<charIndent.length;i++){
+    mapIdent[charIndent[i]]=indentSize;
+  }
+  for(let i=0;i<charUnindent.length;i++){
+    mapIdent[charUnindent[i]]=indentSize*-1;
+  }
+  
+  for(let i=0;i<tabCode.length;i++){
+    let lnIndent=nbIndent;
+    let lnCode=tabCode[i].trim();
+
+    for(let ichar=0;ichar<lnCode.length;ichar++){
+      let indentOffset=mapIdent[lnCode[ichar]] || 0;
+      nbIndent+=indentOffset;
+      if(ichar==0 && indentOffset<0)
+        lnIndent+=indentOffset;
+    }
+    if(nbIndent<0)
+      nbIndent=0;
+    tabCode[i]="".padStart(lnIndent," ")+lnCode;
+  }
+
+  return tabCode.join("\n");
+}
+function reindentCode(){
+  let inputCode = document.getElementsByClassName("qtype_essay_response")[0];
+  inputCode.value=reindentAll(inputCode.value);  
+}
+</script>
