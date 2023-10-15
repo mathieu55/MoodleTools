@@ -2,6 +2,8 @@
 ## SnippetDevTools
 Add a customizable tool bar and features in essay question to help students write code. 
 
+![Preview](https://github.com/mathieu55/MoodleTools/blob/master/doc/img/DevToolsPreview.png?raw=true)
+
 Features:
 - Enabling tab and shift-tab to indent code 
 - Add a button to indent all the codes
@@ -15,9 +17,9 @@ In question text, click the button HTML with the label "</>".
 At the end of the HTML copy all the code from snippetDevTools.html
 
 ### How to customize it
-To customize the tools, locate the line: "addTools(codeInput,divToolbar,true,true,"{}()<>\"\'&|");"
+To customize the tools, locate the line: addTools(...);
 
-The third parameter enable/disable indenting with tab and shift-tab 
-The fourth parameter add/remove the button to align all the codes
+The third parameter enable/disable indenting with tab and shift-tab.
+The fourth parameter add/remove the button to align all the codes.
 The fifth parameter is the list of special character offers to students to copy to the clipboard.
-if the list is empty, the feature is disabled
+if the list is empty, the feature is disabled.
