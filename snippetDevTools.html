@@ -7,23 +7,105 @@ Created: 2023
 */
 
 window.addEventListener('load', (event) => {
-  let codeInput = document.getElementsByClassName("qtype_essay_response")[0];
+  let codeInput = getAnswerZone();
   let divToolbar = document.getElementById("codeHelperToolbar");
-  addTools(codeInput,divToolbar,true,true,"{}()<>\"\'&|");
+  //enableDebug(divToolbar);
+  let config = {
+    enableTab:true, 
+    addIndentAll:true, 
+    sepecialChar:{
+      lstChar:"{}()[]<>\"\'&|$",
+      useClipboard:false, //clipboard dont work in SEB
+      useButton:true
+    }
+  }
+  addTools(codeInput,divToolbar,config);
 });
 
-
-function addTools(codeInput, toolbar, enableTab, addIndentAll, lstChar){
-  if(enableTab){
-    codeInput.addEventListener('keydown', indentWithTabKeyDown);
-  } 
-  createInterface(toolbar, enableTab, addIndentAll, lstChar);
+function getAnswerZone(){
+  return document.getElementsByClassName("qtype_essay_response")[0];
 }
 
-function createInterface(toolbar,enableTab,addIndentAll,lstChar){
-  let instructionTab=enableTab?"Utiliser tab et shift-tab pour indenter":"&nbsp;";
-  let instructionChar=lstChar.length>0?"Copier dans le presse-papier":"&nbsp;";
-  let htmlBtnReindent=addIndentAll?`<button type="button" id="btnReindent" class="btn btn-secondary">Réindenter</button>`:"&nbsp;";
+function enableDebug(toolbar){
+  let divDebug=document.createElement("div");
+  divDebug.style.height="200px";
+  divDebug.style.overflow="auto";
+  divDebug.style.border="1px solid black";
+  toolbar.parentNode.insertBefore(divDebug,toolbar);
+  console.log = newConsole(console.log,divDebug);
+  console.error = newConsole(console.error,divDebug,"red");
+}
+
+function newConsole(oldConsole,divDebug,color){
+  return function(...args){
+    oldConsole(...args);
+    let txt = document.createTextNode(args.join(" "));
+    let p = document.createElement("p");
+    if(color)
+      p.style.color=color;
+    p.appendChild(txt);
+    divDebug.appendChild(p);
+  }
+}
+
+function addTools(codeInput, toolbar, config){
+
+  config = manageDefaultConfig(config);
+
+  if(config.enableTab){
+    codeInput.addEventListener('keydown', indentWithTabKeyDown);
+  } 
+  createInterface(toolbar, config);
+}
+
+function manageDefaultConfig(config){
+  let defaultConfig = {
+    enableTab:true, 
+    addIndentAll:true, 
+    sepecialChar:{
+      lstChar:"{}()[]<>\"\'&|$",
+      useClipboard:false, //clipboard dont work in SEB
+      useButton:true
+    }
+  }
+  if(!config){
+    config={};
+  }
+  if(!config.sepecialChar){
+    config.sepecialChar={};
+  }
+
+  config.enableTab = !isNull(config.enableTab)?config.enableTab:defaultConfig.enableTab;
+  config.addIndentAll = !isNull(config.addIndentAll)?config.addIndentAll:defaultConfig.addIndentAll;
+    
+  config.sepecialChar.lstChar = !isNull(config.sepecialChar.lstChar)?config.sepecialChar.lstChar:defaultConfig.sepecialChar.lstChar;
+  config.sepecialChar.useClipboard = !isNull(config.sepecialChar.useClipboard)?config.sepecialChar.useClipboard:defaultConfig.sepecialChar.useClipboard;
+
+  return config;
+}
+
+function isNull(val){
+  return val===undefined || val===null;
+}
+
+function createInterface(toolbar,config){
+  let instructionTab=config.enableTab?"Utiliser tab et shift-tab pour indenter":"&nbsp;";
+
+  let instructionChar="&nbsp;";
+  if(config.sepecialChar.lstChar.length>0){
+    if(config.sepecialChar.useButton){
+      if(config.sepecialChar.useClipboard){
+        instructionChar="Copier dans le presse-papier";
+      }
+      else
+        instructionChar="Insérer dans la réponse";
+    }
+    else{
+      instructionChar="Liste des caractères spéciaux";
+    }
+  }
+  
+  let htmlBtnReindent=config.addIndentAll?`<button type="button" id="btnReindent" class="btn btn-secondary">Réindenter</button>`:"&nbsp;";
   let ui=`<div class="row">
   <div class="col">${instructionChar}</div>
   <div class="col" align="right">${instructionTab}</div>
@@ -38,23 +120,51 @@ function createInterface(toolbar,enableTab,addIndentAll,lstChar){
   </row>`;
   toolbar.innerHTML=ui;
   let charTool=document.getElementById("specialChar");
-  for(let i=0;i<lstChar.length;i++){
-    addCharButton(charTool,lstChar[i]);
+  if(config.sepecialChar.useButton){
+    for(let i=0;i<config.sepecialChar.lstChar.length;i++){
+      addCharButton(charTool,config.sepecialChar.lstChar[i],config.sepecialChar.useClipboard);
+    }
+  }
+  else{
+    let text = document.createTextNode(config.sepecialChar.lstChar);
+    charTool.appendChild(text);
   }
 
-  if(addIndentAll){
+  if(config.addIndentAll){
     let btnReindent=document.getElementById("btnReindent");
+    btnReindent.contentEditable=false;
     btnReindent.addEventListener("click",reindentCode);
+    btnReindent.addEventListener("mousedown",avoidFocus);
   }
 }
 
-function addCharButton(boutonGroup, value){
+function addCharButton(boutonGroup, value, useClipboard=true){
   let btn = document.createElement("button");
   btn.type="button"
   btn.className="btn btn-secondary";
+  btn.contentEditable=false;
   btn.innerText=value;
-  btn.addEventListener("click",copyToClipboard(value));
+  if(useClipboard)
+    btn.addEventListener("click",copyToClipboard(value));
+  else
+    btn.addEventListener("click",insertInCode(value));
+  btn.addEventListener("mousedown",avoidFocus);
   boutonGroup.append(btn);
+}
+
+function insertInCode(char){
+  let answer = getAnswerZone();
+  return function(){
+    let text = answer.value;
+    let ind = answer.selectionStart;
+    text=text.substring(0,ind)+char+text.substring(ind);
+    answer.value=text;
+    answer.setSelectionRange(ind+1,ind+1);
+  }
+}
+
+function avoidFocus(e){
+  e.preventDefault();
 }
 
 function copyToClipboard(value){
