@@ -1,286 +1,327 @@
-
-<div id="codeHelperToolbar">toolbar</div>
+<div class="codeHelperToolbar">toolbar</div>
 <script>
 /*
 Author: Mathieu Dupuis
 Created: 2023
 */
 
-window.addEventListener('load', (event) => {
-  let codeInput = getAnswerZone();
-  let divToolbar = document.getElementById("codeHelperToolbar");
-  //enableDebug(divToolbar);
-  let config = {
-    enableTab:true, 
-    addIndentAll:true, 
-    sepecialChar:{
-      lstChar:"{}()[]<>\"\'&|$",
-      useClipboard:false, //clipboard dont work in SEB
-      useButton:true
-    }
-  }
-  addTools(codeInput,divToolbar,config);
-});
-
-function getAnswerZone(){
-  return document.getElementsByClassName("qtype_essay_response")[0];
-}
-
-function enableDebug(toolbar){
-  let divDebug=document.createElement("div");
-  divDebug.style.height="200px";
-  divDebug.style.overflow="auto";
-  divDebug.style.border="1px solid black";
-  toolbar.parentNode.insertBefore(divDebug,toolbar);
-  console.log = newConsole(console.log,divDebug);
-  console.error = newConsole(console.error,divDebug,"red");
-}
-
-function newConsole(oldConsole,divDebug,color){
-  return function(...args){
-    oldConsole(...args);
-    let txt = document.createTextNode(args.join(" "));
-    let p = document.createElement("p");
-    if(color)
-      p.style.color=color;
-    p.appendChild(txt);
-    divDebug.appendChild(p);
-  }
-}
-
-function addTools(codeInput, toolbar, config){
-
-  config = manageDefaultConfig(config);
-
-  if(config.enableTab){
-    codeInput.addEventListener('keydown', indentWithTabKeyDown);
-  } 
-  createInterface(toolbar, config);
-}
-
-function manageDefaultConfig(config){
-  let defaultConfig = {
-    enableTab:true, 
-    addIndentAll:true, 
-    sepecialChar:{
-      lstChar:"{}()[]<>\"\'&|$",
-      useClipboard:false, //clipboard dont work in SEB
-      useButton:true
-    }
-  }
-  if(!config){
-    config={};
-  }
-  if(!config.sepecialChar){
-    config.sepecialChar={};
-  }
-
-  config.enableTab = !isNull(config.enableTab)?config.enableTab:defaultConfig.enableTab;
-  config.addIndentAll = !isNull(config.addIndentAll)?config.addIndentAll:defaultConfig.addIndentAll;
-    
-  config.sepecialChar.lstChar = !isNull(config.sepecialChar.lstChar)?config.sepecialChar.lstChar:defaultConfig.sepecialChar.lstChar;
-  config.sepecialChar.useClipboard = !isNull(config.sepecialChar.useClipboard)?config.sepecialChar.useClipboard:defaultConfig.sepecialChar.useClipboard;
-
-  return config;
-}
-
-function isNull(val){
-  return val===undefined || val===null;
-}
-
-function createInterface(toolbar,config){
-  let instructionTab=config.enableTab?"Utiliser tab et shift-tab pour indenter":"&nbsp;";
-
-  let instructionChar="&nbsp;";
-  if(config.sepecialChar.lstChar.length>0){
-    if(config.sepecialChar.useButton){
-      if(config.sepecialChar.useClipboard){
-        instructionChar="Copier dans le presse-papier";
+if(!window.addTools){   
+  window.addEventListener('load', (event) => {
+    let divsToolbar = document.getElementsByClassName("codeHelperToolbar");
+    //enableDebug(divToolbar);
+    let config = {
+      enableTab:true, 
+      addIndentAll:true, 
+      sepecialChar:{
+        lstChar:"{}()[]<>\"\'&|$",
+        useClipboard:false, //clipboard dont work in SEB
+        useButton:true
       }
-      else
-        instructionChar="Insérer dans la réponse";
+    }
+    for (const toolbar of divsToolbar) {
+      let codeInput = getAnswerZone(toolbar);
+      addTools(codeInput,toolbar,config);  
+    }
+  });
+
+  function getAnswerZone(toolbar){
+    let questionZone = toolbar;
+    while(!questionZone.id || !questionZone.id.startsWith("question-"))
+      questionZone=questionZone.parentNode;
+    return questionZone.getElementsByClassName("qtype_essay_response")[0];
+  }
+
+  function enableDebug(toolbar){
+    let divDebug=document.createElement("div");
+    divDebug.style.height="200px";
+    divDebug.style.overflow="auto";
+    divDebug.style.border="1px solid black";
+    toolbar.parentNode.insertBefore(divDebug,toolbar);
+    console.log = newConsole(console.log,divDebug);
+    console.error = newConsole(console.error,divDebug,"red");
+  }
+
+  function newConsole(oldConsole,divDebug,color){
+    return function(...args){
+      oldConsole(...args);
+      let txt = document.createTextNode(args.join(" "));
+      let p = document.createElement("p");
+      if(color)
+        p.style.color=color;
+      p.appendChild(txt);
+      divDebug.appendChild(p);
+    }
+  }
+
+  function addTools(codeInput, toolbar, config){
+    config = manageDefaultConfig(config);
+
+    while(toolbar.firstChild){
+      toolbar.removeChild(toolbar.firstChild);
+    }
+
+    if(config.enableTab){
+      codeInput.addEventListener('keydown', indentWithTabKeyDown);
+    } 
+    createInterface(toolbar, codeInput,config);
+  }
+
+  function manageDefaultConfig(config){
+    let defaultConfig = {
+      enableTab:true, 
+      addIndentAll:true, 
+      sepecialChar:{
+        lstChar:"{}()[]<>\"\'&|$",
+        useClipboard:false, //clipboard dont work in SEB
+        useButton:true
+      }
+    }
+    if(!config){
+      config={};
+    }
+    if(!config.sepecialChar){
+      config.sepecialChar={};
+    }
+
+    config.enableTab = !isNull(config.enableTab)?config.enableTab:defaultConfig.enableTab;
+    config.addIndentAll = !isNull(config.addIndentAll)?config.addIndentAll:defaultConfig.addIndentAll;
+      
+    config.sepecialChar.lstChar = !isNull(config.sepecialChar.lstChar)?config.sepecialChar.lstChar:defaultConfig.sepecialChar.lstChar;
+    config.sepecialChar.useClipboard = !isNull(config.sepecialChar.useClipboard)?config.sepecialChar.useClipboard:defaultConfig.sepecialChar.useClipboard;
+
+    return config;
+  }
+
+  function isNull(val){
+    return val===undefined || val===null;
+  }
+
+  function createInterface(toolbar,codeInput,config){
+    let instructionTab=config.enableTab?"Utiliser tab et shift-tab pour indenter":"&nbsp;";
+
+    let instructionChar="&nbsp;";
+    if(config.sepecialChar.lstChar.length>0){
+      if(config.sepecialChar.useButton){
+        if(config.sepecialChar.useClipboard){
+          instructionChar="Copier dans le presse-papier";
+        }
+        else
+          instructionChar="Insérer dans la réponse";
+      }
+      else{
+        instructionChar="Liste des caractères spéciaux";
+      }
+    }
+
+    let frag = document.createDocumentFragment();
+    let instheader = document.createElement("div");
+    instheader.className="row";
+    frag.appendChild(instheader);
+    
+    let instructionNode = document.createElement("div");
+    instructionNode.className="col";
+    instructionNode.appendChild(document.createTextNode(instructionChar));
+    instheader.appendChild(instructionNode);
+
+    let instructionTabNode = document.createElement("div");
+    instructionTabNode.className="col";
+    instructionTabNode.align="right";
+    instheader.appendChild(instructionTabNode);
+
+    let toolnode = document.createElement("div");
+    toolnode.className="row justify-content-between";
+    frag.appendChild(toolnode);
+
+    //special char
+    let tmp = document.createElement("div");
+    tmp.className="col-6";
+    toolnode.appendChild(tmp);
+    let tmp2 = document.createElement("div");
+    tmp2.className="btn-toolbar";
+    tmp2.role="toolbar";
+    tmp2["aria-label"]="Toolbar";
+    tmp.appendChild(tmp2);
+    let charTool = document.createElement("div");
+    charTool.className="btn-group mr-2";
+    charTool.role="group";
+    charTool["aria-label"]="caractère spéciaux";
+    tmp2.appendChild(charTool);
+
+    if(config.sepecialChar.useButton){
+      for(let i=0;i<config.sepecialChar.lstChar.length;i++){
+        addCharButton(charTool,codeInput,config.sepecialChar.lstChar[i],config.sepecialChar.useClipboard);
+      }
     }
     else{
-      instructionChar="Liste des caractères spéciaux";
+      let text = document.createTextNode(config.sepecialChar.lstChar);
+      charTool.appendChild(text);
+    }
+
+    //reindent all
+    let tmp4 = document.createElement("div");
+    tmp4.className="col-3";
+    tmp4.align="right";
+    toolnode.appendChild(tmp4);
+    
+    let btnReindent=document.createTextNode("&nbsp;");
+    if(config.addIndentAll){
+      btnReindent=document.createElement("button");
+      btnReindent.className="btn btn-secondary";
+      btnReindent.type="button";
+      btnReindent.appendChild(document.createTextNode("Réindenter"));
+      btnReindent.contentEditable=false;
+      btnReindent.addEventListener("click",reindentCode(codeInput));
+      btnReindent.addEventListener("mousedown",avoidFocus);
+    }
+    tmp4.appendChild(btnReindent);
+
+    toolbar.appendChild(frag);    
+  }
+
+  function addCharButton(boutonGroup, codeInput, value, useClipboard=true){
+    let btn = document.createElement("button");
+    btn.type="button"
+    btn.className="btn btn-secondary";
+    btn.contentEditable=false;
+    btn.innerText=value;
+    if(useClipboard)
+      btn.addEventListener("click",copyToClipboard(value));
+    else
+      btn.addEventListener("click",insertInCode(codeInput,value));
+    btn.addEventListener("mousedown",avoidFocus);
+    boutonGroup.append(btn);
+  }
+
+  function insertInCode(codeInput,char){
+    return function(){
+      let text = codeInput.value;
+      let ind = codeInput.selectionStart;
+      text=text.substring(0,ind)+char+text.substring(ind);
+      codeInput.value=text;
+      codeInput.setSelectionRange(ind+1,ind+1);
     }
   }
-  
-  let htmlBtnReindent=config.addIndentAll?`<button type="button" id="btnReindent" class="btn btn-secondary">Réindenter</button>`:"&nbsp;";
-  let ui=`<div class="row">
-  <div class="col">${instructionChar}</div>
-  <div class="col" align="right">${instructionTab}</div>
-  </div>
-  <div class="row justify-content-between">
-  <div class="col-6">
-  <div class="btn-toolbar" role="toolbar" aria-label="Toolbar">
-    <div class="btn-group mr-2" id="specialChar" role="group" aria-label="caractère spéciaux"></div>
-  </div>
-  </div>
-  <div class="col-3" align="right">${htmlBtnReindent}</div>
-  </row>`;
-  toolbar.innerHTML=ui;
-  let charTool=document.getElementById("specialChar");
-  if(config.sepecialChar.useButton){
-    for(let i=0;i<config.sepecialChar.lstChar.length;i++){
-      addCharButton(charTool,config.sepecialChar.lstChar[i],config.sepecialChar.useClipboard);
-    }
-  }
-  else{
-    let text = document.createTextNode(config.sepecialChar.lstChar);
-    charTool.appendChild(text);
-  }
 
-  if(config.addIndentAll){
-    let btnReindent=document.getElementById("btnReindent");
-    btnReindent.contentEditable=false;
-    btnReindent.addEventListener("click",reindentCode);
-    btnReindent.addEventListener("mousedown",avoidFocus);
-  }
-}
-
-function addCharButton(boutonGroup, value, useClipboard=true){
-  let btn = document.createElement("button");
-  btn.type="button"
-  btn.className="btn btn-secondary";
-  btn.contentEditable=false;
-  btn.innerText=value;
-  if(useClipboard)
-    btn.addEventListener("click",copyToClipboard(value));
-  else
-    btn.addEventListener("click",insertInCode(value));
-  btn.addEventListener("mousedown",avoidFocus);
-  boutonGroup.append(btn);
-}
-
-function insertInCode(char){
-  let answer = getAnswerZone();
-  return function(){
-    let text = answer.value;
-    let ind = answer.selectionStart;
-    text=text.substring(0,ind)+char+text.substring(ind);
-    answer.value=text;
-    answer.setSelectionRange(ind+1,ind+1);
-  }
-}
-
-function avoidFocus(e){
-  e.preventDefault();
-}
-
-function copyToClipboard(value){
-  return function(){
-    navigator.clipboard.writeText(value);
-  }
-}
-
-function indentWithTabKeyDown(e) {
-  if (e.key == 'Tab') {
+  function avoidFocus(e){
     e.preventDefault();
-    let tabValue="   ";
-    let result={};
-
-    let start = this.selectionStart;
-    let end = this.selectionEnd;
-    if(!e.shiftKey){
-      result=tabAll(this.value,start,end,tabValue);
-    }
-    else{
-      result=untabAll(this.value,start,end,tabValue); 
-    }
-    this.value=result.value;
-    this.setSelectionRange(result.start, result.end);
   }
-}
 
-function tabAll(text,start,end,tabValue){
-  let returnValue={
-    value:"",
-    start:start+tabValue.length,
-    end:end
-  };
-  let tabStr=text.split("\n");
-  let lnStart=getLn(tabStr,start);
-  let lnEnd=getLn(tabStr,end);
-  for(let i=lnStart;i<=lnEnd && i<tabStr.length;i++){
-    tabStr[i]=tabValue+tabStr[i];
-    returnValue.end+=tabValue.length;
-  }
-  returnValue.value=tabStr.join("\n");
-
-  return returnValue;
-}
-function untabAll(text,start,end,tabValue){
-  let returnValue={
-    value:"",
-    start:0,
-    end:end
-  };
-  let tabStr=text.split("\n");
-  let lnStart=getLn(tabStr,start);
-  let lnEnd=getLn(tabStr,end);
-  for(let i=lnStart;i<=lnEnd && i<tabStr.length;i++){
-    if(tabStr[i].startsWith(tabValue)){
-      tabStr[i]=tabStr[i].substring(tabValue.length);
-      returnValue.end-=tabValue.length;
+  function copyToClipboard(value){
+    return function(){
+      navigator.clipboard.writeText(value);
     }
   }
-  if(returnValue.start>returnValue.end)
-    returnValue.end=returnValue.start;
-  returnValue.value=tabStr.join("\n");
-  returnValue.start=nthIndexof(returnValue.value,"\n",lnStart)+1;
-  if(returnValue.start<0)
-    returnValue.start=0;  
-  return returnValue;
-}
-function nthIndexof(str, search, n){
-  let i= -1;
-  while(n-- && i++<str.length){
-      i= str.indexOf(search, i);
-      if (i < 0) break;
-  }
-  return i;
-}
-function getLn(tabStr,index,offset=0){
-  let currentLength=-1; //for the first position
-  let currentLn=0;
-  
-  do{
-    currentLength+=tabStr[currentLn].length+1; //add 1 for /n
-    currentLn++;
-  }while(currentLength<index+offset && currentLn<tabStr.length);
-  return currentLn>tabStr.length?tabStr.length-1:currentLn-1;
-}
-function reindentAll(code,indentSize=3,charIndent="{([",charUnindent="})]"){
-  let nbIndent=0;
-  let tabCode=code.split("\n");
-  
-  let mapIdent={};
-  for(let i=0;i<charIndent.length;i++){
-    mapIdent[charIndent[i]]=indentSize;
-  }
-  for(let i=0;i<charUnindent.length;i++){
-    mapIdent[charUnindent[i]]=indentSize*-1;
-  }
-  
-  for(let i=0;i<tabCode.length;i++){
-    let lnIndent=nbIndent;
-    let lnCode=tabCode[i].trim();
 
-    for(let ichar=0;ichar<lnCode.length;ichar++){
-      let indentOffset=mapIdent[lnCode[ichar]] || 0;
-      nbIndent+=indentOffset;
-      if(ichar==0 && indentOffset<0)
-        lnIndent+=indentOffset;
+  function indentWithTabKeyDown(e) {
+    if (e.key == 'Tab') {
+      e.preventDefault();
+      let tabValue="   ";
+      let result={};
+
+      let start = this.selectionStart;
+      let end = this.selectionEnd;
+      if(!e.shiftKey){
+        result=tabAll(this.value,start,end,tabValue);
+      }
+      else{
+        result=untabAll(this.value,start,end,tabValue); 
+      }
+      this.value=result.value;
+      this.setSelectionRange(result.start, result.end);
     }
-    if(nbIndent<0)
-      nbIndent=0;
-    tabCode[i]="".padStart(lnIndent," ")+lnCode;
   }
 
-  return tabCode.join("\n");
-}
-function reindentCode(){
-  let inputCode = document.getElementsByClassName("qtype_essay_response")[0];
-  inputCode.value=reindentAll(inputCode.value);  
+  function tabAll(text,start,end,tabValue){
+    let returnValue={
+      value:"",
+      start:start+tabValue.length,
+      end:end
+    };
+    let tabStr=text.split("\n");
+    let lnStart=getLn(tabStr,start);
+    let lnEnd=getLn(tabStr,end);
+    for(let i=lnStart;i<=lnEnd && i<tabStr.length;i++){
+      tabStr[i]=tabValue+tabStr[i];
+      returnValue.end+=tabValue.length;
+    }
+    returnValue.value=tabStr.join("\n");
+
+    return returnValue;
+  }
+  function untabAll(text,start,end,tabValue){
+    let returnValue={
+      value:"",
+      start:0,
+      end:end
+    };
+    let tabStr=text.split("\n");
+    let lnStart=getLn(tabStr,start);
+    let lnEnd=getLn(tabStr,end);
+    for(let i=lnStart;i<=lnEnd && i<tabStr.length;i++){
+      if(tabStr[i].startsWith(tabValue)){
+        tabStr[i]=tabStr[i].substring(tabValue.length);
+        returnValue.end-=tabValue.length;
+      }
+    }
+    if(returnValue.start>returnValue.end)
+      returnValue.end=returnValue.start;
+    returnValue.value=tabStr.join("\n");
+    returnValue.start=nthIndexof(returnValue.value,"\n",lnStart)+1;
+    if(returnValue.start<0)
+      returnValue.start=0;  
+    return returnValue;
+  }
+  function nthIndexof(str, search, n){
+    let i= -1;
+    while(n-- && i++<str.length){
+        i= str.indexOf(search, i);
+        if (i < 0) break;
+    }
+    return i;
+  }
+  function getLn(tabStr,index,offset=0){
+    let currentLength=-1; //for the first position
+    let currentLn=0;
+    
+    do{
+      currentLength+=tabStr[currentLn].length+1; //add 1 for /n
+      currentLn++;
+    }while(currentLength<index+offset && currentLn<tabStr.length);
+    return currentLn>tabStr.length?tabStr.length-1:currentLn-1;
+  }
+  function reindentAll(code,indentSize=3,charIndent="{([",charUnindent="})]"){
+    let nbIndent=0;
+    let tabCode=code.split("\n");
+    
+    let mapIdent={};
+    for(let i=0;i<charIndent.length;i++){
+      mapIdent[charIndent[i]]=indentSize;
+    }
+    for(let i=0;i<charUnindent.length;i++){
+      mapIdent[charUnindent[i]]=indentSize*-1;
+    }
+    
+    for(let i=0;i<tabCode.length;i++){
+      let lnIndent=nbIndent;
+      let lnCode=tabCode[i].trim();
+
+      for(let ichar=0;ichar<lnCode.length;ichar++){
+        let indentOffset=mapIdent[lnCode[ichar]] || 0;
+        nbIndent+=indentOffset;
+        if(ichar==0 && indentOffset<0)
+          lnIndent+=indentOffset;
+      }
+      if(nbIndent<0)
+        nbIndent=0;
+      tabCode[i]="".padStart(lnIndent," ")+lnCode;
+    }
+
+    return tabCode.join("\n");
+  }
+  function reindentCode(codeInput){
+    return function(){
+      codeInput.value=reindentAll(codeInput.value);  
+    }
+  }
 }
 </script>
